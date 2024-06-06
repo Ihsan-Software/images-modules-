@@ -29,7 +29,8 @@ const focusSchema = new mongoose.Schema({
         require: [true, 'missing userID of focus...']
     }
 
-}
+},
+{timestamps: true}
 );
 
 focusSchema.pre(/^find/, function(next){

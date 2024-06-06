@@ -9,9 +9,9 @@ const router = express.Router();
 router.post('/signup', authController.signup);
 router.post('/login', authController.login);
 
-//User Routers RESF
+//User Routers 
 router.use(authController.protect_)
-router.get('/myInformations', userController.getME, userController.getUser)
+router.get('/myInformation', userController.getME, userController.getUser)
 router.post('/updateMyPassword', authController.updateMyPassword)
 
 router.use(authController.restrictTo('admin'))

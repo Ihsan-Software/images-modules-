@@ -22,18 +22,14 @@ const moodSchema = new mongoose.Schema({
         require: [true, 'missing date of mood...']
     },
 
-    photo:{
-        type: String,
-        default: 'default.jpg'
-    },
-
     user: {
         type: mongoose.Schema.ObjectId,
         ref: 'User',
         require: [true,'missing userID of mood...']
     }
 
-    }
+},
+{timestamps: true}
 );
 
 

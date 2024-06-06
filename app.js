@@ -34,7 +34,7 @@ if (process.env.NODE_ENV === 'development') { app.use(morgan('dev')) };
 
 
 app.use((req, res, next) => {
-    console.log('Hello In Middlewear Functions... 👋');
+    console.log('Hello In Middleware Functions... 👋');
     next();
 });
 app.use((req, res, next) => {
@@ -53,10 +53,10 @@ app.use((req, res, next) => {
 
 
 // Routers
-app.use('/api/v1/users',userRouter)
-app.use('/api/v1/habits', habitRouter)
-app.use('/api/v1/moods', moodRouter)
-app.use('/api/v1/focus', focusRouter)
+app.use('/users',userRouter)
+app.use('/habits', habitRouter)
+app.use('/moods', moodRouter)
+app.use('/focus', focusRouter)
 
 // 1) Error Handling..., When Get Any Router Not Exist In Server...
 app.all('*', (req, res, next) => {

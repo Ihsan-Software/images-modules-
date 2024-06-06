@@ -29,9 +29,9 @@ exports.getMyMoods = catchAsync(async (req, res, next) => {
 
 
 exports.getWeeklyMoods = catchAsync(async (req, res, next) => {
-    const year = req.params.moodDate.split('-')[0]
-    const month = req.params.moodDate.split('-')[1] 
-    const day = req.params.moodDate.split('-')[2] * 1 + 6
+    const year = req.query.moodDate.split('-')[0]
+    const month = req.query.moodDate.split('-')[1] 
+    const day = req.query.moodDate.split('-')[2] * 1 + 6
     let end = ''
     if (day <= 9){
         end= `0${day}`
@@ -45,7 +45,7 @@ exports.getWeeklyMoods = catchAsync(async (req, res, next) => {
         {
             $match: {
                 
-                $and: [{user: new ObjectId(`${req.user.id}`)},{date: { $gte: req.params.moodDate }}, {date: { $lte: `${year}-${month}-${end}` }}]
+                $and: [{user: new ObjectId(`${req.user.id}`)},{date: { $gte: req.query.moodDate }}, {date: { $lte: `${year}-${month}-${end}` }}]
             }
         },
         {

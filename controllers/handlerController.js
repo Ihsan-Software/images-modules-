@@ -58,28 +58,17 @@ exports.createOne = (Model) =>
         }
 });
 
-exports.deleteOne = Model => catchAsync(async (req, res,next) => {
-    
-    var doc,habit,mood,focus
-    if (req.params.habitID) {
-        habit = await Model.findByIdAndDelete(req.params.habitID);
+exports.deleteOne = (Model) => catchAsync(async (req, res, next) => {
+    const { id } = req.params;
+    const document = await Model.findByIdAndDelete(id);
+
+    if (!document) {
+        return next(new ApiError(`No document for this id ${id}`, 404));
     }
-    else if (req.params.moodID) {
-        mood = await Model.findByIdAndDelete(req.params.moodID);
-    }
-    else if (req.params.focusID) {
-        focus = await Model.findByIdAndDelete(req.params.focusID);
-    }
-    else {
-        doc = await Model.findByIdAndDelete(req.params.id);
-    }
-    if(!doc && !habit && !mood && !focus) {
-        return next(new AppError('Cant find document From This ID To Delete It...!',404));
-    }   
-    res.status(204).json({
-        status: "success"
-    });
+
+    res.status(204).send();
 });
+
 
 exports.updateOne = Model => catchAsync(async (req, res,next) => {
     const id = req.params.id;

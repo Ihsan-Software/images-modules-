@@ -6,16 +6,16 @@ const router = express.Router();
 
 router.use(authController.protect_)
 
-router.route('/getMyMoods/').get(moodController.getMyMoods);
-router.route('/createMood').post(moodController.createMood);
-router.route('/getWeeklyMoods/:moodDate').get(moodController.getWeeklyMoods);
-router.route('/deleteMyMood/:moodID').delete(moodController.deleteMood);
+router.route('').get(moodController.getMyMoods);
+router.route('').post(moodController.createMood);
+router.route('/getWeeklyMoods').get(moodController.getWeeklyMoods);
+router.route('/:id').delete(moodController.deleteMood);
+
 router.use(authController.restrictTo('admin'))
 
-router.route('/getAllMood').get(moodController.getMoods);
-router.route('/getMood/:id').get(moodController.getMood)
-router.route('/deleteMood/:id').delete(moodController.deleteMood);
-router.route('/updateMood/:id').patch(moodController.updateMood);
+router.route('').get(moodController.getMoods);
+router.route('/:id').get(moodController.getMood)
+router.route('/:id').patch(moodController.updateMood);
 
 
 

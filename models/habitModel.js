@@ -30,18 +30,14 @@ const habitSchema = new mongoose.Schema({
     },
     date: Array,
     appearDays: Array,
-    createdAt: 
-        {
-        type: Date,
-        require: [true,'missing createdAt of habit...'],
-        default: new Date().toISOString()
-    },
 
     user: {
             type: mongoose.Schema.ObjectId,
             ref: 'User',
             require: [true,'missing userID of habit...']
         }
+},{
+    timestamps: true
 });
 habitSchema.pre(/^find/, function(next){
     this.find().select('-__v')

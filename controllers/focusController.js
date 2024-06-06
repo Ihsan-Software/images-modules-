@@ -3,7 +3,7 @@ const catchAsync = require('../utils/catchAsync');
 const factory = require('./handlerController');
 
 //CURD FUNCTIONS
-exports.getFocuss = factory.getAll(Focus)
+exports.getFocuses = factory.getAll(Focus)
 
 exports.getFocus = factory.getOne(Focus)
 
