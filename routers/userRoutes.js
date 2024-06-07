@@ -13,10 +13,11 @@ router.post('/login', authController.login);
 router.use(authController.protect_)
 router.get('/myInformation', userController.getME, userController.getUser)
 router.post('/updateMyPassword', authController.updateMyPassword)
+router.patch('/updateMyInformation', userController.uploadUserImage, userController.resizeImage,userController.updateLoggedUserData)
 
 router.use(authController.restrictTo('admin'))
-router.route('/').get(userController.getUsers).post(userController.createUser);
-router.route('/:id').get(userController.getUser).patch(userController.updateUser)
+router.route('').get(userController.getUsers).post(userController.uploadUserImage, userController.resizeImage, userController.createUser);
+router.route('/:id').get(userController.getUser).patch(userController.uploadUserImage, userController.resizeImage,userController.updateUser)
 .delete(userController.deleteUser);
 
 module.exports = router;
