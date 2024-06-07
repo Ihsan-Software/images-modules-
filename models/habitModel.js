@@ -49,33 +49,21 @@ habitSchema.methods.getTodayHabitsProcess = async function (req, id) {
     
     console.log('start getTodayHabitsProcess')
     result = []
-    var currentTime, currentDay;
-    if (req.query.specialTime && req.query.specialTime!==undefined) {
-        currentTime = req.query.specialTime
-        currentDay = req.query.specialDay;
-    } 
-    else {
-        currentTime = new Date().toISOString().split('T')[0];    
-        var daysOfWeek = [
-          "Sunday", 
-          "Monday",
-          "Tuesday",
-          "Wednesday",
-          "Thursday",
-          "Friday",
-          "Saturday",
-        ];
-        var date = new Date();
-        var dayIndex = date.getDay();
-        var todayName = daysOfWeek[dayIndex];
-        console.log(todayName);
-        currentDay = todayName;
-    }
+    console.log("from model", req.query.specialTime, req.query.specialDay);
+
     console.log(req.user.id);
-    console.log(currentTime);
-    console.log(currentDay);
-    var activeHabits = await Habit.find({ $and: [{ date:currentTime}, { user: id },{ appearDays: currentDay }]});
-    var notActiveHabits = await Habit.find({ $and: [{ date:{$not:{$eq:currentTime}}}, { appearDays: currentDay }, { user: id }]});
+    console.log(req.query.specialTime);
+    console.log( req.query.specialDay);
+    var activeHabits = await Habit.find({ $and: [{ date:req.query.specialTime}, { user: id },{ appearDays:  req.query.specialDay }]});
+    var notActiveHabits = await Habit.find({
+        $and: [{ date: { $not: { $eq: req.query.specialTime } } }, { appearDays:  req.query.specialDay }, { user: id }, {
+        $expr: {
+            $lte: [
+                { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } },
+                req.query.specialTime
+            ]
+        }
+    }]});
 
 
     result[0] = notActiveHabits

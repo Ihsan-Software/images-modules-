@@ -8,9 +8,9 @@ router.use(authController.protect_)
 
 router.route('').post(habitController.createHabit);
 // router.route('/getMyHabits/:specialTime').get(habitController.getTodayHabits);
-router.route("/checkHabit/:checkHabitID").patch(habitController.check);
-router.route('/unCheckHabit/:uncheckHabitID').patch(habitController.unCheck);
-router.route('/getTodayHabits').get(habitController.getTodayHabits);
+router.route("/checkHabit/:checkHabitID").patch(habitController.setSpecialDayAndTime, habitController.check, habitController.getTodayHabits);
+router.route('/unCheckHabit/:uncheckHabitID').patch(habitController.setSpecialDayAndTime, habitController.unCheck, habitController.getTodayHabits);
+router.route('/getTodayHabits').get(habitController.setSpecialDayAndTime, habitController.getTodayHabits);
 router.route("/getDetail").get(habitController.getDetail);
 router.route('/:id').delete(habitController.deleteHabit);
 
