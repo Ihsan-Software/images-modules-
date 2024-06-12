@@ -28,7 +28,10 @@ const habitSchema = new mongoose.Schema({
         require: [true,'missing active of habit...'],
         default: false
     },
-    date: Array,
+    date: {
+        type: Array,
+        default:[]
+    },
     appearDays: Array,
 
     user: {

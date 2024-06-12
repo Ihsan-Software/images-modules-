@@ -58,3 +58,15 @@ exports.updateLoggedUserData = catchAsync(async (req, res, next) => {
 
     res.status(200).json({ data: updatedUser });
 });
+
+exports.getUsersDegree = catchAsync(async (req, res) => {
+
+    const users = await User.find().select(' bio name photo totalDegree level').sort({ totalDegree: -1 });
+
+    return res.status(200).json({
+        status: "success",
+        requestTime: req.requestTime,
+        usersCounter: users.length,
+            users
+    });
+})

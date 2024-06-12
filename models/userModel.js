@@ -22,6 +22,10 @@ const userSchema = new mongoose.Schema({
         type: String,
         default: 'default.jpg'
     },
+    bio:{
+        type: String,
+        default: ''
+    },
 
     password:{
         type: String,
@@ -35,6 +39,22 @@ const userSchema = new mongoose.Schema({
         enum:['user', 'guest', 'admin'],
         default: 'user'
     },
+    totalDegree: {
+        type: String,
+        default: '0'
+    },
+    level: {
+        type: String,
+        default: '0'
+    },
+    todayOpen: {
+        type: Date,
+        default: new Date()
+    },
+    degree: {
+        type: String,
+        default: '0'
+    }
 
 },
     {timestamps: true},

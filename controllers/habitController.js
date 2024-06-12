@@ -1,4 +1,5 @@
 const Habit = require('../models/habitModel');
+const User = require('../models/userModel')
 const AppError = require('../utils/appError');
 const catchAsync = require('../utils/catchAsync');
 const factory = require('../controllers/handlerController');
@@ -19,62 +20,6 @@ exports.deleteHabit = factory.deleteOne(Habit)
 
 
 // Other
-
-const sendResponse = catchAsync(async(req, res, userID)=>{
-
-    var activeHabits = await Habit.find({ active: true, user: userID });
-    var notActiveHabits = await Habit.find({ active: false, user: userID });
-    var data;
-    if (activeHabits[0]) {
-        data = await activeHabits[0].getTodayHabitsProcess(req, userID)
-    }
-    else if(notActiveHabits[0]){
-        data = await notActiveHabits[0].getTodayHabitsProcess(req, userID)
-    }
-
-
-    if (data[0].length == 0 && data[1].length == 0) {
-        console.log(new Date);
-        fakeData = [
-        {
-            _id: "00000000000",
-            name: "fake",
-            description: "fake",
-            icon: "fake",
-            counter: 0,
-            active: false,
-            date: [],
-            appearDays: [],
-            createdAt: "0000-00-00T08:31:41.135Z",
-            user: "00000000000",
-        },];
-        return res.status(200).json({
-            status: "success",
-            requestTime: req.requestTime,
-            activeCounter: 0,
-            notActiveCounter: 0,
-            data: {
-                activeHabits: fakeData,
-                notActiveHabits: fakeData
-            },
-        });
-    }
-    else {
-
-    return res.status(200).json({
-        status: "success",
-        requestTime: req.requestTime,
-        activeCounter: data[1].length,
-        notActiveCounter: data[0].length,
-        data: {
-            activeHabits: data[1],
-            notActiveHabits: data[0],
-        },
-    });
-    }
-
-})
-
 exports.setSpecialDayAndTime = catchAsync(async(req, res, next)=>{
     var currentTime, currentDay;
 
@@ -160,6 +105,15 @@ exports.unCheck = catchAsync(async (req, res, next) => {
 });
 
 exports.getTodayHabits = catchAsync(async (req, res, next) => {
+
+    // update user degree if it open app in new day
+    const user = await User.findById(req.user.id);
+    let newDegree = parseInt(user.degree) + 3;
+
+    if(new Date().toISOString().split('T')[0] > user.todayOpen.toISOString().split('T')[0]) {
+        await User.findByIdAndUpdate(req.user.id, { degree: newDegree.toString(), todayOpen: new Date()});
+    }
+    
     
     console.log('start return getTodayHabitsProcess')
     result = []
@@ -223,8 +177,9 @@ exports.getTodayHabits = catchAsync(async (req, res, next) => {
 
 // Aggregation
 
-exports.getDetail = catchAsync(async (req, res, next) => {
-    userID = req.user.id    
+exports.userAchievements = catchAsync(async (req, res, next) => {
+    // Complete Habit
+    let userID = req.user.id, userDegree = 0, achievements = [], userLevel = 0; 
     const completedDailyHabits = await Habit.aggregate([
         {   
             $match: {
@@ -252,22 +207,182 @@ exports.getDetail = catchAsync(async (req, res, next) => {
 
     let resultCompletedDailyHabits = [];
     const filteredResults = completedDailyHabits.map(group => {
-        filteredGroup = {}
-        filteredGroup['name'] = group.Name[0];
-        Object.keys(group).forEach(key => {
-            if (key !== '_id' && key !== 'Name' && group[key][0] !== false) {
-                filteredGroup[`${key}`] = parseInt(key.split("_")[1]);
-            }
-        });
-        resultCompletedDailyHabits.push(filteredGroup);
-    });
-
-
-    res.status(200).json({
-        status: 'success',
-        requestTime: req.requestTime,
-        data:{
-            resultCompletedDailyHabits
+        for (i = 0; i < group.Name.length; i++) { 
+            let filteredGroup = {}
+            filteredGroup['name'] = group.Name[i];
+            Object.keys(group).forEach(key => {
+                if (key !== '_id' && key !== 'Name' && group[key][i] !== false) {
+                    filteredGroup[`${key}`] = parseInt(key.split("_")[1]);
+                }
+            });
+            resultCompletedDailyHabits.push(filteredGroup);
         }
     });
+    
+    // Calculate Degree Achievement 
+    let completedDailyHabitsTemp = [], completedDailyHabitsAchievement={};
+    resultCompletedDailyHabits.forEach(ele => {
+        //achievement
+        let objKeys = Object.keys(ele).forEach(objKey => {
+            if (objKey !== 'name') { 
+                if(!completedDailyHabitsTemp.includes(ele[objKey])){                    
+                    completedDailyHabitsTemp.push(ele[objKey]);
+                    completedDailyHabitsAchievement[`${[objKey]}`] = ele[objKey];
+                }
+            }
+        })
+        //degree
+        let completedDailyHabitsDegree = Object.keys(ele).length -1
+        userDegree += (completedDailyHabitsDegree * 3)
+    })
+    achievements.push(completedDailyHabitsAchievement);
+    // End Complete Habit
+
+
+    // Perfect Days
+
+    const perfectDaysHabit = await Habit.find({ user: userID });
+    let resultPerfectDays = [], badDate = [];
+    perfectDaysHabit.forEach(ele => {
+
+        if ((ele.date.includes(ele.createdAt.toISOString().split('T')[0])) && (!badDate.includes(ele.createdAt.toISOString().split('T')[0]))) {
+            if (!resultPerfectDays.includes(ele.createdAt.toISOString().split('T')[0])) {
+                resultPerfectDays.push(ele.createdAt.toISOString().split("T")[0]);
+            }
+        }
+        else {
+            if (!badDate.includes(ele.createdAt.toISOString().split('T')[0])) {
+                badDate.push(ele.createdAt.toISOString().split("T")[0]);
+            }
+            if (resultPerfectDays.includes(ele.createdAt.toISOString().split('T')[0])) { 
+                resultPerfectDays.splice(resultPerfectDays.indexOf(ele.createdAt.toISOString().split("T")[0]), 1);
+            }
+        }
+    })
+    // Calculate Degree Achievement
+    // Achievement
+    let resultPerfectDaysObj = {};
+
+    for(i=1; i<=resultPerfectDays.length; i++) {
+        switch (i) {
+            case 1: resultPerfectDaysObj[`completed_${i}`] = i; break;
+            case 2: resultPerfectDaysObj[`completed_${i}`] = i; break;
+            case 10: resultPerfectDaysObj[`completed_${i}`] = i; break;
+            case 20: resultPerfectDaysObj[`completed_${i}`] = i; break;
+            case 30: resultPerfectDaysObj[`completed_${i}`] = i; break;
+            case 40: resultPerfectDaysObj[`completed_${i}`] = i; break;
+            case 50: resultPerfectDaysObj[`completed_${i}`] = i; break;
+            case 80: resultPerfectDaysObj[`completed_${i}`] = i; break;
+            case 100: resultPerfectDaysObj[`completed_${i}`] = i; break;
+
+        }
+    }
+    achievements.push(resultPerfectDaysObj);
+    // Degree
+    let perfectDaysDegree = await Habit.find({ user: userID, date: {$in: resultPerfectDays} })
+    userDegree +=(perfectDaysDegree.length *3)        
+    // End Perfect Days
+
+    // Consecutive Days
+    const consecutiveDaysHabit = await Habit.find({ user: userID });
+    const consecutiveDaysCount = (dates) => {
+        if (!dates || dates.length === 0) {
+            return []; // Return an empty array if there are no dates
+        }
+
+        let streaks = []; // Array to store consecutive streak lengths
+        let currentStreak = 1;
+
+        // Sort the dates to ensure they are in ascending order
+        dates.sort((a, b) => new Date(a) - new Date(b));
+
+        for (let i = 1; i < dates.length; i++) {
+            const diffInDays = (new Date(dates[i]) - new Date(dates[i - 1])) / (1000 * 60 * 60 * 24);
+
+            if (diffInDays === 1) {
+                currentStreak++;
+            } else {
+                streaks.push(currentStreak); // Add the streak length to the array
+                currentStreak = 1; // Reset streak if there's a gap in dates
+            }
+        }
+
+        // Add the last streak length
+        streaks.push(currentStreak);
+
+        return streaks;
+    };
+
+    let resultConsecutiveDays = [];
+    consecutiveDaysHabit.forEach(ele => {
+        if (ele.date.length > 1) {
+            resultConsecutiveDays.push(consecutiveDaysCount(ele.date));
+        }
+    })
+
+    // Calculate Degree And Achievement
+    // Achievement
+    let consecutiveDaysObj = {};
+    resultConsecutiveDays.forEach(ele => {
+        ele.forEach(val => {
+            switch (val) {
+                case 2: consecutiveDaysObj[`completed_${val}`] = val; break;
+                case 3: consecutiveDaysObj[`completed_${val}`] = val; break;
+                case 20: consecutiveDaysObj[`completed_${val}`] = val; break;
+                case 30: consecutiveDaysObj[`completed_${val}`] = val; break;
+                case 40: consecutiveDaysObj[`completed_${val}`] = val; break;
+                case 50: consecutiveDaysObj[`completed_${val}`] = val; break;
+                case 80: consecutiveDaysObj[`completed_${val}`] = val; break;
+                case 100: consecutiveDaysObj[`completed_${val}`] = val; break;
+            }
+            // Degree 
+            if(val>1){
+                userDegree += 3
+            }
+        })
+        
+    })
+    achievements.push([consecutiveDaysObj]);
+    // End Consecutive Days
+    const user = await User.findById(userID);
+    userDegree += parseInt(user.degree);
+    userLevel = Math.floor(userDegree / 10); 
+    // update user degree and level
+
+    await User.findByIdAndUpdate(userID, { totalDegree: userDegree.toString(), level: userLevel.toString()});
+
+    // send response depending on url
+    if (req.url.split("/")[req.url.split("/").length - 1] === 'getUserAchievements') {
+        res.status(200).json({
+            status: 'success',
+            requestTime: req.requestTime,
+            //resultCompletedDailyHabits,
+            //resultPerfectDays,
+            //resultConsecutiveDays,
+            achievements: {
+                AcquiredHabits: achievements[0],
+                PerfectDays: achievements[1],
+                ConsecutiveDays: achievements[2],
+            },
+            userDegree,
+            userLevel
+        });
+    }
+    else {
+        req.userDetails = {
+            status: 'success',
+            requestTime: req.requestTime,
+            resultCompletedDailyHabits,
+            resultPerfectDays,
+            resultConsecutiveDays,
+            achievements: {
+                AcquiredHabits: achievements[0],
+                PerfectDays: achievements[1],
+                ConsecutiveDays: achievements[2],
+            },
+            userDegree,
+            userLevel
+        };
+        next();
+    }
 })
