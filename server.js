@@ -5,7 +5,7 @@ dotenv.config({ path: './config.env' });
 const app = require('./app');
 
 mongoose.connect(process.env.OLD_ATLAS_DATABASE).then(() => {
-    console.log("Connected To Database Success...🚀");
+    console.log('Connected To Database Success...🚀');
 });
 
 const port = process.env.PORT || 3000;
