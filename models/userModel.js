@@ -76,11 +76,6 @@ userSchema.virtual('Moods',{
     localField: '_id'
 });
 
-userSchema.virtual('Focus',{
-    ref: 'Focus',
-    foreignField: 'user',
-    localField: '_id'
-});
 
 userSchema.pre(/^find/, function(next){
     this.find().select('-__v')
@@ -93,6 +88,22 @@ userSchema.pre('save', async function (next) {
     this.password = await bcrypt.hash(this.password, 12);
 
     next();
+});
+
+const setImageURL = (doc) => {
+    if (doc.photo) {
+        const imageUrl = `${process.env.SERVER_URL}/users/${doc.photo}`;
+        doc.photo = imageUrl;
+    }
+};
+// findOne, findAll and update
+userSchema.post("init", (doc) => {
+    setImageURL(doc);
+});
+
+// create
+userSchema.post("save", (doc) => {
+    setImageURL(doc);
 });
 
 
